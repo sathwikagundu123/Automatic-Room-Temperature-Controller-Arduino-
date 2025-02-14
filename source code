@@ -1,0 +1,81 @@
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+#include <DHT.h>
+
+// Define DHT sensor type and pin
+#define DHTTYPE DHT11
+#define DHTPIN 2
+
+// Initialize the DHT sensor
+DHT dht(DHTPIN, DHTTYPE);
+
+// Initialize the LCD
+LiquidCrystal_I2C lcd(0x27, 16, 2); // Change the address to 0x27 if needed
+
+// Define LED pins
+#define LED1_PIN 8
+#define LED2_PIN 9
+
+// Define temperature threshold
+#define TEMP_THRESHOLD 30
+
+void setup() {
+  // Start serial communication
+  Serial.begin(9600);
+
+  // Initialize the DHT sensor
+  dht.begin();
+
+  // Initialize the LCD
+  lcd.init();
+  lcd.backlight();
+
+  // Initialize the LED pins
+  pinMode(LED1_PIN, OUTPUT);
+  pinMode(LED2_PIN, OUTPUT);
+
+  // Print a startup message
+  lcd.setCursor(0, 0);
+  lcd.print("Temp Monitor");
+  lcd.setCursor(0, 1);
+  lcd.print("Initializing...");
+  delay(2000); // Wait for 2 seconds
+}
+
+void loop() {
+  // Read the temperature
+  float temperature = dht.readTemperature();
+
+  // Check if any reads failed and exit early (to try again).
+  if (isnan(temperature)) {
+    Serial.println("Failed to read from DHT sensor!");
+    lcd.setCursor(0, 0);
+    lcd.print("Sensor Error!");
+    return;
+  }
+
+  // Print temperature to serial monitor
+  Serial.print("Temperature: ");
+  Serial.print(temperature);
+  Serial.println(" *C");
+
+  // Display temperature on LCD
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Temperature:");
+  lcd.setCursor(0, 1);
+  lcd.print(temperature);
+  lcd.print(" C");
+
+  // Control LEDs based on temperature
+  if (temperature > TEMP_THRESHOLD) {
+    digitalWrite(LED1_PIN, HIGH); // Turn on LED1
+    digitalWrite(LED2_PIN, LOW);  // Turn off LED2
+  } else {
+    digitalWrite(LED1_PIN, LOW);  // Turn off LED1
+    digitalWrite(LED2_PIN, HIGH); // Turn on LED2
+  }
+
+  // Wait a few seconds between measurements.
+  delay(2000);
+}
